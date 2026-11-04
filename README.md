@@ -38,7 +38,7 @@ That commit starts the first build.
 
 ### 3. Get the app file
 
-1. Open the **Actions** tab and click the newest run. A yellow dot means it's still building. The first build takes a few minutes.
+1. Open the **Actions** tab and click the newest run. A yellow dot means it's still running. The app itself is built in about a minute once a cloud Mac picks up the job. The tests after it take several more minutes, mostly waiting for a simulated iPhone to start.
 2. The file is ready once the **Publish to the "latest" release** step has a green check. The tests run after that, so the file is ready even if they're still running or fail.
 3. Go back to the **Code** tab. Under **Releases** on the right, open **Latest build** and click **MyApp.ipa** under Assets. Don't pick "Source code". If your browser asks whether to keep the file, keep it.
 
