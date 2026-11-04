@@ -1,0 +1,51 @@
+# XcodeGen turns this file into MyApp.xcodeproj on the cloud Mac, so there is
+# no Xcode project to commit or keep in sync. Edit this file instead.
+name: MyApp
+
+options:
+  # Change this to something only you would use, like com.yourgithubname.
+  # Apple needs every app ID to be unique, and a free account can't take one
+  # that someone else already registered.
+  bundleIdPrefix: com.example.changeme
+  deploymentTarget:
+    iOS: "16.0"
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    # CI replaces this with the commit it built, so the app shows which push you installed.
+    GIT_COMMIT: local
+
+targets:
+  MyApp:
+    type: application
+    platform: iOS
+    sources: [App]
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "1"
+    info:
+      # Generated from the properties below on every build. Edit them here, not in the plist.
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: My App
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        GitCommit: $(GIT_COMMIT)
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        ITSAppUsesNonExemptEncryption: false
+    scheme:
+      testTargets: [MyAppTests]
+
+  MyAppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [Tests]
+    dependencies:
+      - target: MyApp
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES

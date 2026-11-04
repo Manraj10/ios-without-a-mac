@@ -1,0 +1,64 @@
+name: Build iPhone app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push cancels a build that is still running.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # to put the .ipa on the "latest" release
+
+jobs:
+  build:
+    # A cloud Mac. GitHub's standard runners are free and unlimited on public repositories.
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Generate the Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Build for iPhone, unsigned
+        run: |
+          xcodebuild build \
+            -project MyApp.xcodeproj -scheme MyApp -configuration Release \
+            -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            GIT_COMMIT="${GITHUB_SHA::7}"
+
+      # An .ipa is a zip with the app inside a Payload folder. Sideloadly signs it on your PC.
+      - name: Package the .ipa
+        run: |
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/MyApp.app Payload/
+          zip -qry MyApp.ipa Payload
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: MyApp-ipa
+          path: MyApp.ipa
+
+      # Artifacts expire. A release asset doesn't, and its link never changes.
+      - name: Publish to the "latest" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view latest >/dev/null 2>&1 || \
+            gh release create latest --prerelease --title "Latest build" --notes "Rebuilt on every push to main."
+          gh release upload latest MyApp.ipa --clobber
+          gh release edit latest --notes "Built from commit ${GITHUB_SHA::7}. Install it with Sideloadly, as the README explains."
+
+      # Tests run after publishing, so a failing test never costs you the phone build.
+      - name: Run the tests on an iPhone simulator
+        run: |
+          SIM=$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("iPhone"))][0].udid')
+          xcodebuild test -project MyApp.xcodeproj -scheme MyApp \
+            -destination "id=$SIM" CODE_SIGNING_ALLOWED=NO
